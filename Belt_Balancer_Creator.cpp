@@ -1556,6 +1556,9 @@ int main(int argc, char* args[])
 					{
 						auto* temp1 = searchObjectAtPos(xArray - 1, yArray);
 						auto* temp2 = searchObjectAtPos(xArray, yArray - 1);
+						auto* temp3 = searchObjectAtPos(xArray + 1, yArray - 1);
+						auto* temp4 = searchObjectAtPos(xArray - 1, yArray + 1);
+
 						auto isSplitterBlocking = false;		//bool if a splitter is blocking the placing
 						if (temp1 != nullptr) isSplitterBlocking = temp1->getType() == LType::SPLITTER &&
 																   (temp1->getOutDirection() == LBeltIODirections::TOP ||
@@ -1598,6 +1601,9 @@ int main(int argc, char* args[])
 							case SPLITTER_NORTH_HOLD:
 								if (searchObjectAtPos(xArray + 1, yArray) == nullptr)
 								{
+									if (temp3 != nullptr) if (temp3->getType() == LType::SPLITTER &&
+															  (temp3->getInDirection() == LBeltIODirections::LEFT ||
+															   temp3->getInDirection() == LBeltIODirections::RIGHT)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(TOP);		//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1607,6 +1613,9 @@ int main(int argc, char* args[])
 							case SPLITTER_EAST_HOLD:
 								if (searchObjectAtPos(xArray, yArray + 1) == nullptr)
 								{
+									if (temp4 != nullptr) if (temp4->getType() == LType::SPLITTER &&
+										(temp4->getInDirection() == LBeltIODirections::TOP ||
+											temp4->getInDirection() == LBeltIODirections::BOTTOM)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(RIGHT);	//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1616,6 +1625,9 @@ int main(int argc, char* args[])
 							case SPLITTER_SOUTH_HOLD:
 								if (searchObjectAtPos(xArray + 1, yArray) == nullptr)
 								{
+									if (temp3 != nullptr) if (temp3->getType() == LType::SPLITTER &&
+										(temp3->getInDirection() == LBeltIODirections::LEFT ||
+											temp3->getInDirection() == LBeltIODirections::RIGHT)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(BOTTOM);	//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1625,6 +1637,9 @@ int main(int argc, char* args[])
 							case SPLITTER_WEST_HOLD:
 								if (searchObjectAtPos(xArray, yArray + 1) == nullptr)
 								{
+									if (temp4 != nullptr) if (temp4->getType() == LType::SPLITTER &&
+										(temp4->getInDirection() == LBeltIODirections::TOP ||
+											temp4->getInDirection() == LBeltIODirections::BOTTOM)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(LEFT);	//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
