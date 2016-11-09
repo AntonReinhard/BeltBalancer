@@ -1,14 +1,15 @@
 //Using SDL, SDL_image, standard IO, and string
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include <cstdlib>
 #include <time.h>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <string>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -158,15 +159,18 @@ public:
 	//virtual function render
 	virtual void render(int currentframe) const = 0;
 
-	//virtual function output
-	virtual void outputforward() = 0;
-
 	//virtual function to tell the Type of the object
 	virtual int getType() = 0;
 
 	//virtual function for second in-/output, depends on the type of the object
 	virtual Object* getOutObject2() const = 0;
 	virtual Object* getInObject2() const = 0;
+
+	//adds the content of the given object to its own content
+	void getInputFrom(Object* inputtingObject);
+
+	//content of this object is now nextTickContent, nextTickContent gets reset
+	void updateContent();
 
 	//resets the inputs of this object
 	void resetInput();
@@ -294,6 +298,7 @@ protected:
 
 	//the contents of the object
 	vector< double > content;
+	vector< double > nextTickContent;
 
 private:
 	//a static counter counting how many objects exist
@@ -307,6 +312,20 @@ int Object::count = 0;
 
 //the vector containing all the objects on the screen
 vector<Object*> objects;
+
+void Object::getInputFrom(Object* inputtingObject)
+{
+	for (int i = 0; i < inputtingObject->content.size(); i++)			//adds the contents of the given object to this objects nextTickContents
+		this->nextTickContent[i] += inputtingObject->getContent(i);
+}
+
+void Object::updateContent()
+{
+	for (int i = 0; i < this->content.size(); i++)		//the content is now nextTickContent
+		this->content[i] = this->nextTickContent[i];
+	for (int i = 0; i < this->content.size(); i++)		//reset the nextTickContent
+		this->nextTickContent[i] = 0.0;
+}
 
 void Object::resetInput()
 {
@@ -410,16 +429,17 @@ int Object::getOutDirection() const
 
 double Object::getContent(int ID) const
 {
+	if (ID >= this->content.size()) return 0.0;
 	return this->content.at(ID);
 }
 
 void Object::setContent(double ratio, int ID)
 {
-	if (this->content.size() < ID+1)	//is the vector too small?
+	while (this->content.size() <= ID)	//is the vector too small?
 	{
-		this->content.resize(ID+1);		//resize if thats the case
+		this->content.push_back(0.0);
 	}
-	this->content[ID] = ratio;			//should be save to use [] here cause the vector just got resized to not go out of bounds
+	this->content.at(ID) = ratio;			//should be save to use [] here cause the vector just got resized to not go out of bounds
 }
 
 void Object::updateDirection()
@@ -759,9 +779,6 @@ public:
 	//renders the belt at its location
 	void render(int currentframe) const override;
 
-	//outputs its stuff to the object its outputting to
-	void outputforward() override;
-
 	int getType() override;
 
 	//have to define these so I can create Belts, always returning nullptr here
@@ -780,9 +797,6 @@ public:
 
 	//renders the splitter at its location
 	void render(int currentframe) const override;
-
-	//outputs its stuff to the object(s) its outputting to
-	void outputforward() override;
 
 	int getType() override;
 
@@ -816,6 +830,9 @@ void initBackground();
 
 //updating the directions of all Belts on Screen
 void updateBelts();
+
+//updating the input IDs of all the objects
+void updateInIDs();
 
 //The window
 SDL_Window* gWindow = nullptr;
@@ -971,11 +988,6 @@ void Belt::render(int currentframe) const
 		SDL_RenderCopy(gRenderer, gCursorBoxSprite, &gCursorBoxSpriteClips[BLUE][0], &cursorBoxDest);
 }
 
-void Belt::outputforward()
-{
-	//output to the next Belt in the normal Vector of the Belts, this function should only be called from a temporary object...
-}
-
 int Belt::getType()
 {
 	return LType::BELT;
@@ -1077,11 +1089,6 @@ void Splitter::render(int cframe) const
 	default:
 		break;
 	}
-}
-
-void Splitter::outputforward()
-{
-	//this should only be called from a temporary object and outputs to the objects in the normal vector of the objects
 }
 
 int Splitter::getType()
@@ -1363,11 +1370,14 @@ void close()
 
 Object* searchObjectAtPos(int x, int y)		//searches an object at the given position and returns a pointer to it
 {
-	for (auto i = 0; i < objects.size(); i++)
+	if (!objects.empty())
 	{
-		if (objects[i]->getX() == x && objects[i]->getY() == y)	//if the position matches
+		for (auto i = 0; i < objects.size(); i++)
 		{
-			return objects[i];									//return the pointer
+			if (objects[i]->getX() == x && objects[i]->getY() == y)	//if the position matches
+			{
+				return objects[i];									//return the pointer
+			}
 		}
 	}
 	return nullptr;							//if nothing is found return the nullptr
@@ -1443,41 +1453,18 @@ void resetAllInputs()	//the function that deletes all the former contents of the
 //TODO: this should be a static function of Object and use the to be done static vector of all objects
 void simulateBelts() //the function that updates all the inputs for every object
 {
-	//create bool-vector of length of the current vector of objects and save if the object has got input yet
-	vector<bool> gotInput;
-	
+	//go through all the objects
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		gotInput.push_back(false);
+		//for every object, add the contents of its inputs to its own nextTickContent
+		if (objects[i]->getInObject() != nullptr) 
+			objects[i]->getInputFrom(objects[i]->getInObject());
+		if (objects[i]->getInObject2() != nullptr)
+			objects[i]->getInputFrom(objects[i]->getInObject2());
 	}
-	
-	//search the outputs of the current balancer
-	//TODO: überdenken...
-	/*for (auto i = 0; i < objects.size(); i++)
-	{
-		if (objects[i]->isOutput())
-		{	//found an output
-			auto* anchor = objects[i];			//a pointer to the current belt
-			if (anchor->getInObject() != nullptr)			//there needs to be a input object
-			{
-				if (anchor->getType() == LType::BELT)
-				{
-					for (auto j = 0; j < MAX_NUMBER_OF_INPUTS; j++) anchor->setContent(anchor->getInObject()->getContent(j), j);			//set all the contents to the contents of the belt inputting to it
-				}
-				else if (anchor->getType() == LType::SPLITTER)
-				{
-					for (auto j = 0; j < MAX_NUMBER_OF_INPUTS; j++)
-					{
-						double in1, in2 = 0.0;
-						in1 = anchor->getInObject()->getContent(j);
-						if (anchor->getInObject2() != nullptr) in2 = anchor->getInObject2()->getContent(j);	//dont know yet, if there is a second input, but first one is defined
-						anchor->setContent(in1 + in2, j);				//Add both inputs for the splitter
-					}
-				}
-			}
-		}
-	}*/
 
+	for (auto i = 0; i < objects.size(); i++)	//update content for every object
+		objects[i]->updateContent();
 }
 
 void updateBelts()
@@ -1488,6 +1475,21 @@ void updateBelts()
 	{
 		objects[i]->updateDirection();
 		objects[i]->updateIOObjects();
+	}
+}
+
+void updateInIDs()
+{
+	int IDcounter = 0;
+	for (auto i = 0; i < objects.size(); i++)		//for every object in the list update its input ID
+	{
+		objects[i]->setInputID(-1);					//everything is no input at first...
+		if (objects[i]->isInput())					//if an object is an input
+		{
+			objects[i]->setInputID(IDcounter);		//set its inputID
+			objects[i]->setContent(1.0, IDcounter);	//set its content to 1 on its inputID
+			IDcounter++;
+		}
 	}
 }
 
@@ -1730,6 +1732,7 @@ int main(int argc, char* args[])
 								break;
 							}
 							updateBelts();		//update the belts
+							updateInIDs();		//update the inputIDs and stuff
 						}
 					}
 				}
@@ -1870,36 +1873,27 @@ int main(int argc, char* args[])
 				}
 
 				//show infobox
-				if (mouseNotMoved >= maxFramesMouseNotMoved)
-				{
-					//TODO: need to search for the right object inside the vector now... rewrite
-					/*
-					if (beltGrid[xArray][yArray].isActive()) //if the belt the mouse is hovering over is active
+				//if (false)
+				//{
+					if (mouseNotMoved >= maxFramesMouseNotMoved)
 					{
-						std::string beltcontent = "";
-						for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)
+						//TODO: need to search for the right object inside the vector now... rewrite
+						
+						Object* hoverObject = searchObjectAtPos(xArray, yArray);
+						if (hoverObject != nullptr) //if there is an object the mouse is hovering over
 						{
-							if (i != 0) beltcontent += "\n";
-							stringstream convert; //just to convert the numbers to string
-							convert << i + 1 << ". input: " << beltGrid[xArray][yArray].getInputContentRatio(i);
-							beltcontent += convert.str();
+							std::string beltcontent = "";
+							for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)
+							{
+								if (i != 0) beltcontent += "\n";
+								std::stringstream convert; //just to convert the numbers to string
+								convert << i + 1 << ". input: " << hoverObject->getContent(i);
+								beltcontent += convert.str();
+							}
+							hoverTextBox(beltcontent, x, y);
 						}
-						hoverTextBox(beltcontent, x, y);
 					}
-					else if (splitterGrid[xArray][yArray].isActive() || splitterGrid[xArray][yArray].isOccupied())
-					{
-						std::string splittercontent = "";
-						for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)
-						{
-							if (i != 0) splittercontent += "\n";
-							stringstream convert; //just to convert the numbers to string
-							convert << i + 1 << ". input: " << splitterGrid[xArray][yArray].getInputContentRatio(i);
-							splittercontent += convert.str();
-						}
-						hoverTextBox(splittercontent, x, y);
-					}
-					*/
-				}
+				//}
 
 				simulateBelts();
 
