@@ -1,8 +1,8 @@
 //Using SDL, SDL_image, standard IO, and string
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <stdio.h>
 #include <cstdlib>
 #include <time.h>
@@ -160,11 +160,23 @@ public:
 	virtual void render(int currentframe) const = 0;
 
 	//virtual function to tell the Type of the object
-	virtual int getType() = 0;
+	virtual int getType() const = 0;
 
 	//virtual function for second in-/output, depends on the type of the object
 	virtual Object* getOutObject2() const = 0;
 	virtual Object* getInObject2() const = 0;
+	virtual void setOutObject2(Object* outObj) = 0;
+	virtual void setInObject2(Object* inObj) = 0;
+
+	//get pointer to one of the objects this Object outputs to (n is like an ID)
+	Object* getOutObject() const;
+
+	//same as getOutObject with in
+	Object* getInObject() const;
+
+	//sets the in/output object of this object
+	void setInObject(Object* inObj);
+	void setOutObject(Object* outObj);
 
 	//adds the content of the given object to its own content
 	void getInputFrom(Object* inputtingObject);
@@ -229,18 +241,8 @@ public:
 	//setting the content for a specific ID
 	void setContent(double ratio, int ID);
 
-	//get pointer to one of the objects this Object outputs to (n is like an ID)
-	Object* getOutObject() const;
-
-	//same as getOutObject with in
-	Object* getInObject() const;
-
 	//updates this object's in direction
 	void updateDirection();
-
-	//sets the in/output object of this object
-	void setInObject(Object* inObj);
-	void setOutObject(Object* outObj);
 
 	//resets the object's in and out objects
 	void resetIOObjects();
@@ -297,8 +299,8 @@ protected:
 	Object* inputObject;
 
 	//the contents of the object
-	vector< double > content;
-	vector< double > nextTickContent;
+	double content[MAX_NUMBER_OF_INPUTS];
+	double nextTickContent[MAX_NUMBER_OF_INPUTS];
 
 private:
 	//a static counter counting how many objects exist
@@ -315,21 +317,22 @@ vector<Object*> objects;
 
 void Object::getInputFrom(Object* inputtingObject)
 {
-	for (int i = 0; i < inputtingObject->content.size(); i++)			//adds the contents of the given object to this objects nextTickContents
+	for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)			//adds the contents of the given object to this objects nextTickContents
 		this->nextTickContent[i] += inputtingObject->getContent(i);
 }
 
 void Object::updateContent()
 {
-	for (int i = 0; i < this->content.size(); i++)		//the content is now nextTickContent
+	for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)		//the content is now nextTickContent
 		this->content[i] = this->nextTickContent[i];
-	for (int i = 0; i < this->content.size(); i++)		//reset the nextTickContent
+	for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)		//reset the nextTickContent
 		this->nextTickContent[i] = 0.0;
 }
 
 void Object::resetInput()
 {
-	this->content.clear();
+	for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)
+		this->content[i] = 0.0;
 }
 
 int Object::getCount()
@@ -429,17 +432,12 @@ int Object::getOutDirection() const
 
 double Object::getContent(int ID) const
 {
-	if (ID >= this->content.size()) return 0.0;
-	return this->content.at(ID);
+	return this->content[ID];
 }
 
 void Object::setContent(double ratio, int ID)
 {
-	while (this->content.size() <= ID)	//is the vector too small?
-	{
-		this->content.push_back(0.0);
-	}
-	this->content.at(ID) = ratio;			//should be save to use [] here cause the vector just got resized to not go out of bounds
+	this->content[ID] = ratio;			//should be save to use [] here cause the vector just got resized to not go out of bounds
 }
 
 void Object::updateDirection()
@@ -472,7 +470,7 @@ void Object::updateIOObjects()
 
 	//Input Object first:
 	if (this->hasInput())	//if there is some input...
-	{	//search it
+	{	//search for it
 		for (auto i = 0; i < objects.size(); i++)
 		{
 			switch(this->getInDirection())
@@ -482,24 +480,48 @@ void Object::updateIOObjects()
 					&& objects[i]->getX() == this->getX()		//if their x coordinates match
 					&& objects[i]->getY() == this->getY() - 1)	//it the y coordinates are right
 					this->setInObject(objects[i]);				//set the input Object to this object
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
+					&& objects[i]->getOutDirection() == BOTTOM	//output-direction has to be right
+					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
+					this->setInObject2(objects[i]);				//set this object's second input
 				break;
 			case RIGHT:
 				if (objects[i]->getOutDirection() == LEFT
 					&& objects[i]->getX() == this->getX() + 1
 					&& objects[i]->getY() == this->getY())
 					this->setInObject(objects[i]);
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
+					&& objects[i]->getOutDirection() == LEFT	//output-direction has to be right
+					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+					this->setInObject2(objects[i]);				//set this object's second input
 				break;
 			case BOTTOM:
 				if (objects[i]->getOutDirection() == TOP
 					&& objects[i]->getX() == this->getX()
 					&& objects[i]->getY() == this->getY() + 1)
 					this->setInObject(objects[i]);
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
+					&& objects[i]->getOutDirection() == TOP		//output-direction has to be right
+					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+					this->setInObject2(objects[i]);				//set this object's second input
 				break;
 			case LEFT:
 				if (objects[i]->getOutDirection() == RIGHT
 					&& objects[i]->getX() == this->getX() - 1
 					&& objects[i]->getY() == this->getY())
 					this->setInObject(objects[i]);
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
+					&& objects[i]->getOutDirection() == RIGHT	//output-direction has to be right
+					&& objects[i]->getX() == this->getX() - 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+					this->setInObject2(objects[i]);				//set this object's second input
 				break;
 			default:
 				break;
@@ -510,6 +532,7 @@ void Object::updateIOObjects()
 	else
 	{
 		this->setInObject(nullptr);
+		this->setInObject2(nullptr);
 		this->setInput(true);			//this is an Input if there is nothing inputting to i
 	}
 	//same for the pointer to the output object
@@ -524,24 +547,48 @@ void Object::updateIOObjects()
 					&& objects[i]->getX() == this->getX()		//the same x coordinate
 					&& objects[i]->getY() == this->getY() + 1)	//and the right y coordinate
 					this->setOutObject(objects[i]);				//set the output object to this object
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
+					&& objects[i]->getOutDirection() == BOTTOM	//output-direction has to be right
+					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
+					this->setOutObject2(objects[i]);			//set this object's second output
 				break;
 			case RIGHT:
 				if (objects[i]->getInDirection() == LEFT
 					&& objects[i]->getX() == this->getX() - 1
 					&& objects[i]->getY() == this->getY())
 					this->setOutObject(objects[i]);
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
+					&& objects[i]->getOutDirection() == LEFT	//output-direction has to be right
+					&& objects[i]->getX() == this->getX() - 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+					this->setOutObject2(objects[i]);			//set this object's second output
 				break;
 			case BOTTOM:
 				if (objects[i]->getInDirection() == TOP
 					&& objects[i]->getX() == this->getX()
 					&& objects[i]->getY() == this->getY() - 1)
 					this->setOutObject(objects[i]);
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
+					&& objects[i]->getOutDirection() == TOP		//output-direction has to be right
+					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
+					this->setOutObject2(objects[i]);			//set this object's second output
 				break;
 			case LEFT:
 				if (objects[i]->getInDirection() == RIGHT
 					&& objects[i]->getX() == this->getX() + 1
 					&& objects[i]->getY() == this->getY())
 					this->setOutObject(objects[i]);
+
+				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
+					&& objects[i]->getOutDirection() == RIGHT	//output-direction has to be right
+					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+					this->setOutObject2(objects[i]);			//set this object's second output
 				break;
 			default:
 				break;
@@ -552,18 +599,24 @@ void Object::updateIOObjects()
 	else
 	{
 		this->setOutObject(nullptr);
+		this->setOutObject2(nullptr);
 		this->setOutput(true);			//this is an Output because there is nothing it is outputting to
 	}
 }
 
 bool Object::isInputFromTop() const //gives back true, if there is coming some input from above for this object
 {
-	//checking for a Object from above
+	//checking for an Object from above
 	for (auto i = 0; i < objects.size(); i++)			
 	{
 		if (objects[i]->getX() == this->getX()			//if the x position matches
 			&& objects[i]->getY() == this->getY() - 1	//and the y position is right (the object is one above)
 			&& objects[i]->getOutDirection() == BOTTOM)	//and the out direction is to the bottom
+			return true;
+		if (this->getType() == LType::SPLITTER			//if  is a splitter, input can also come to the offside
+			&& objects[i]->getX() == this->getX() + 1	//if x coordinates are right
+			&& objects[i]->getY() == this->getY() - 1	//if y coordinates are right
+			&& objects[i]->getOutDirection() == BOTTOM)	//if outputdirection of the other object is right
 			return true;
 	}
 	return false; //if none of the conditions match, there is no input from above
@@ -579,6 +632,11 @@ bool Object::isInputFromRight() const
 			&& objects[i]->getY() == this->getY()
 			&& objects[i]->getOutDirection() == LEFT)
 			return true;
+		if (this->getType() == LType::SPLITTER
+			&& objects[i]->getX() == this->getX() + 1
+			&& objects[i]->getY() == this->getY() + 1
+			&& objects[i]->getOutDirection() == LEFT)
+			return true;
 	}
 	return false;
 }
@@ -588,7 +646,12 @@ bool Object::isInputFromBottom() const
 	for (auto i = 0; i < objects.size(); i++)
 	{
 		if (objects[i]->getX() == this->getX()
-			&& objects[i]->getY() == this->getY() +1
+			&& objects[i]->getY() == this->getY() + 1
+			&& objects[i]->getOutDirection() == TOP)
+			return true;
+		if (this->getType() == LType::SPLITTER
+			&& objects[i]->getX() == this->getX() + 1
+			&& objects[i]->getY() == this->getY() + 1
 			&& objects[i]->getOutDirection() == TOP)
 			return true;
 	}
@@ -603,6 +666,11 @@ bool Object::isInputFromLeft() const
 			&& objects[i]->getY() == this->getY()
 			&& objects[i]->getOutDirection() == RIGHT)
 			return true;
+		if (this->getType() == LType::SPLITTER
+			&& objects[i]->getX() == this->getX() - 1
+			&& objects[i]->getY() == this->getY() + 1
+			&& objects[i]->getOutDirection() == RIGHT)
+			return true;
 	}
 	return false;
 }
@@ -615,6 +683,11 @@ bool Object::isOutputToTop() const //gives back true, if there is an Object abov
 			&& objects[i]->getY() == this->getY() - 1	//if y positions are right
 			&& objects[i]->getInDirection() == BOTTOM)	//if the objects input is from the bottom
 			return true;								//=> there is an Object to output to above
+		if (objects[i]->getType() == LType::SPLITTER	//again, just like with inputs, a splitter can give its output to the offside
+			&& objects[i]->getX() == this->getX() + 1
+			&& objects[i]->getY() == this->getY() - 1
+			&& objects[i]->getInDirection() == BOTTOM)
+			return true;
 	}
 	return false; //if none of the conditions match, there is nothing to output to above
 }
@@ -629,6 +702,11 @@ bool Object::isOutputToRight() const
 			&& objects[i]->getY() == this->getY()
 			&& objects[i]->getInDirection() == LEFT)
 			return true;
+		if (objects[i]->getType() == LType::SPLITTER
+			&& objects[i]->getX() == this->getX() + 1
+			&& objects[i]->getY() == this->getY() + 1
+			&& objects[i]->getInDirection() == LEFT)
+			return true;
 	}
 	return false;
 }
@@ -638,6 +716,11 @@ bool Object::isOutputToBottom() const
 	for (auto i = 0; i < objects.size(); i++)
 	{
 		if (objects[i]->getX() == this->getX()
+			&& objects[i]->getY() == this->getY() + 1
+			&& objects[i]->getInDirection() == TOP)
+			return true;
+		if (objects[i]->getType() == LType::SPLITTER
+			&& objects[i]->getX() == this->getX() + 1
 			&& objects[i]->getY() == this->getY() + 1
 			&& objects[i]->getInDirection() == TOP)
 			return true;
@@ -651,6 +734,11 @@ bool Object::isOutputToLeft() const
 	{
 		if (objects[i]->getX() == this->getX() - 1
 			&& objects[i]->getY() == this->getY()
+			&& objects[i]->getInDirection() == RIGHT)
+			return true;
+		if (objects[i]->getType() == LType::SPLITTER
+			&& objects[i]->getX() == this->getX() - 1
+			&& objects[i]->getY() == this->getY() + 1
 			&& objects[i]->getInDirection() == RIGHT)
 			return true;
 	}
@@ -779,11 +867,13 @@ public:
 	//renders the belt at its location
 	void render(int currentframe) const override;
 
-	int getType() override;
+	int getType() const override;
 
 	//have to define these so I can create Belts, always returning nullptr here
 	Object* getInObject2() const override;
 	Object* getOutObject2() const override;
+	void setInObject2(Object* inObj) override;
+	void setOutObject2(Object* outObj) override;
 };
 
 class Splitter : public Object
@@ -798,12 +888,14 @@ public:
 	//renders the splitter at its location
 	void render(int currentframe) const override;
 
-	int getType() override;
+	int getType() const override;
 
 	double getContent(int ID) const override;
 
 	Object* getInObject2() const override;
 	Object* getOutObject2() const override;
+	void setInObject2(Object* inObj) override;
+	void setOutObject2(Object* outObj) override;
 
 protected:
 
@@ -988,7 +1080,7 @@ void Belt::render(int currentframe) const
 		SDL_RenderCopy(gRenderer, gCursorBoxSprite, &gCursorBoxSpriteClips[BLUE][0], &cursorBoxDest);
 }
 
-int Belt::getType()
+int Belt::getType() const
 {
 	return LType::BELT;
 }
@@ -1002,6 +1094,10 @@ Object * Belt::getOutObject2() const
 {
 	return nullptr;
 }
+
+void Belt::setInObject2(Object * inObj) {}	//nothing to do here, it has no second Input
+
+void Belt::setOutObject2(Object * outObj) {}	//nothing to do here, it has no second output
 
 Splitter::Splitter()
 {
@@ -1091,7 +1187,7 @@ void Splitter::render(int cframe) const
 	}
 }
 
-int Splitter::getType()
+int Splitter::getType() const
 {
 	return LType::SPLITTER;
 }
@@ -1112,6 +1208,16 @@ Object * Splitter::getInObject2() const
 Object * Splitter::getOutObject2() const
 {
 	return this->outputObject2;
+}
+
+void Splitter::setInObject2(Object * inObj)
+{
+	this->inputObject2 = inObj;
+}
+
+void Splitter::setOutObject2(Object * outObj)
+{
+	this->outputObject2 = outObj;
 }
 
 void initBackground()
@@ -1461,6 +1567,8 @@ void simulateBelts() //the function that updates all the inputs for every object
 			objects[i]->getInputFrom(objects[i]->getInObject());
 		if (objects[i]->getInObject2() != nullptr)
 			objects[i]->getInputFrom(objects[i]->getInObject2());
+		if (objects[i]->isInput())
+			objects[i]->getInputFrom(objects[i]);		//if its an input itself, it gets the same input next tick
 	}
 
 	for (auto i = 0; i < objects.size(); i++)	//update content for every object
@@ -1480,7 +1588,7 @@ void updateBelts()
 
 void updateInIDs()
 {
-	int IDcounter = 0;
+	auto IDcounter = 0;
 	for (auto i = 0; i < objects.size(); i++)		//for every object in the list update its input ID
 	{
 		objects[i]->setInputID(-1);					//everything is no input at first...
@@ -1879,7 +1987,7 @@ int main(int argc, char* args[])
 					{
 						//TODO: need to search for the right object inside the vector now... rewrite
 						
-						Object* hoverObject = searchObjectAtPos(xArray, yArray);
+						auto* hoverObject = searchObjectAtPos(xArray, yArray);
 						if (hoverObject != nullptr) //if there is an object the mouse is hovering over
 						{
 							std::string beltcontent = "";
