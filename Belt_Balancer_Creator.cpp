@@ -164,6 +164,10 @@ public:
 	//virtual function to tell the Type of the object
 	virtual int getType() = 0;
 
+	//virtual function for second in-/output, depends on the type of the object
+	virtual Object* getOutObject2() const = 0;
+	virtual Object* getInObject2() const = 0;
+
 	//resets the inputs of this object
 	void resetInput();
 
@@ -215,8 +219,8 @@ public:
 	//sets the y position of this Object
 	void setY(int ypos);
 
-	//get Contents of the Object
-	double getContent(int ID) const;
+	//get Contents of the Object (Note: for a splitter gives back half of it if it has two outputs)
+	virtual double getContent(int ID) const;
 
 	//setting the content for a specific ID
 	void setContent(double ratio, int ID);
@@ -437,6 +441,8 @@ void Object::resetIOObjects()
 {
 	this->inputObject = nullptr;		//releases only the pointer, not the object
 	this->outputObject = nullptr;		//same
+	this->input = false;
+	this->output = false;
 }
 
 void Object::updateIOObjects()
@@ -479,10 +485,12 @@ void Object::updateIOObjects()
 				break;
 			}
 		}
+		this->setInput(false);			//this is no Input because something is inputting to it
 	}
 	else
 	{
 		this->setInObject(nullptr);
+		this->setInput(true);			//this is an Input if there is nothing inputting to i
 	}
 	//same for the pointer to the output object
 	if (this->hasOutput())	//if there is some output
@@ -519,10 +527,12 @@ void Object::updateIOObjects()
 				break;
 			}
 		}
+		this->setOutput(false);			//this is no Output because its outputting to something
 	}
 	else
 	{
 		this->setOutObject(nullptr);
+		this->setOutput(true);			//this is an Output because there is nothing it is outputting to
 	}
 }
 
@@ -753,6 +763,10 @@ public:
 	void outputforward() override;
 
 	int getType() override;
+
+	//have to define these so I can create Belts, always returning nullptr here
+	Object* getInObject2() const override;
+	Object* getOutObject2() const override;
 };
 
 class Splitter : public Object
@@ -771,6 +785,11 @@ public:
 	void outputforward() override;
 
 	int getType() override;
+
+	double getContent(int ID) const override;
+
+	Object* getInObject2() const override;
+	Object* getOutObject2() const override;
 
 protected:
 
@@ -962,6 +981,16 @@ int Belt::getType()
 	return LType::BELT;
 }
 
+Object * Belt::getInObject2() const
+{
+	return nullptr;
+}
+
+Object * Belt::getOutObject2() const
+{
+	return nullptr;
+}
+
 Splitter::Splitter()
 {
 	outputObject2 = nullptr;
@@ -1058,6 +1087,24 @@ void Splitter::outputforward()
 int Splitter::getType()
 {
 	return LType::SPLITTER;
+}
+
+double Splitter::getContent(int ID) const
+{
+	if (this->outputObject != nullptr && this->outputObject2 != nullptr)
+		return this->content[ID] / 2;											//if it has 2 outputs it outputs half to each output
+	
+	return this->content[ID];													//Otherwise just return the normal content
+}
+
+Object * Splitter::getInObject2() const
+{
+	return this->inputObject2;
+}
+
+Object * Splitter::getOutObject2() const
+{
+	return this->outputObject2;
 }
 
 void initBackground()
@@ -1396,10 +1443,41 @@ void resetAllInputs()	//the function that deletes all the former contents of the
 //TODO: this should be a static function of Object and use the to be done static vector of all objects
 void simulateBelts() //the function that updates all the inputs for every object
 {
-	//TODO: Rewrite for the vector versions... just call the apropriate functions of each object
-	//create Temp versions of the Vector
-
+	//create bool-vector of length of the current vector of objects and save if the object has got input yet
+	vector<bool> gotInput;
 	
+	for (auto i = 0; i < objects.size(); i++)
+	{
+		gotInput.push_back(false);
+	}
+	
+	//search the outputs of the current balancer
+	//TODO: überdenken...
+	/*for (auto i = 0; i < objects.size(); i++)
+	{
+		if (objects[i]->isOutput())
+		{	//found an output
+			auto* anchor = objects[i];			//a pointer to the current belt
+			if (anchor->getInObject() != nullptr)			//there needs to be a input object
+			{
+				if (anchor->getType() == LType::BELT)
+				{
+					for (auto j = 0; j < MAX_NUMBER_OF_INPUTS; j++) anchor->setContent(anchor->getInObject()->getContent(j), j);			//set all the contents to the contents of the belt inputting to it
+				}
+				else if (anchor->getType() == LType::SPLITTER)
+				{
+					for (auto j = 0; j < MAX_NUMBER_OF_INPUTS; j++)
+					{
+						double in1, in2 = 0.0;
+						in1 = anchor->getInObject()->getContent(j);
+						if (anchor->getInObject2() != nullptr) in2 = anchor->getInObject2()->getContent(j);	//dont know yet, if there is a second input, but first one is defined
+						anchor->setContent(in1 + in2, j);				//Add both inputs for the splitter
+					}
+				}
+			}
+		}
+	}*/
+
 }
 
 void updateBelts()
