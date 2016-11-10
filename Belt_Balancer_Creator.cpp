@@ -476,52 +476,70 @@ void Object::updateIOObjects()
 			switch(this->getInDirection())
 			{
 			case TOP:
-				if (objects[i]->getOutDirection() == BOTTOM		//if the object has the right direction
-					&& objects[i]->getX() == this->getX()		//if their x coordinates match
-					&& objects[i]->getY() == this->getY() - 1)	//it the y coordinates are right
-					this->setInObject(objects[i]);				//set the input Object to this object
+				if (objects[i]->getOutDirection() == BOTTOM)		//if the object has the right direction
+				{
+					if (objects[i]->getX() == this->getX()			//if their x coordinates match
+						&& objects[i]->getY() == this->getY() - 1)	//it the y coordinates are right
+						this->setInObject(objects[i]);				//set the input Object to this object
 
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
-					&& objects[i]->getOutDirection() == BOTTOM	//output-direction has to be right
-					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
-					this->setInObject2(objects[i]);				//set this object's second input
+					if (objects[i]->getType() == LType::SPLITTER	//if the object is a splitter (not this)
+						&& objects[i]->getX() == this->getX() - 1	//x coordinates are right
+						&& objects[i]->getY() == this->getY() - 1)	//y coordinates are right
+						this->setInObject(objects[i]);				//set the input Object to this object
+
+					if (this->getType() == LType::SPLITTER			//if this is a splitter it can also get input at its offside
+						&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+						&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
+						this->setInObject2(objects[i]);				//set this object's second input
+				}
 				break;
 			case RIGHT:
-				if (objects[i]->getOutDirection() == LEFT
-					&& objects[i]->getX() == this->getX() + 1
-					&& objects[i]->getY() == this->getY())
-					this->setInObject(objects[i]);
-
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
-					&& objects[i]->getOutDirection() == LEFT	//output-direction has to be right
-					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
-					this->setInObject2(objects[i]);				//set this object's second input
+				if (objects[i]->getOutDirection() == LEFT)
+				{
+					if (objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY())
+						this->setInObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setInObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setInObject2(objects[i]);
+				}
 				break;
 			case BOTTOM:
-				if (objects[i]->getOutDirection() == TOP
-					&& objects[i]->getX() == this->getX()
-					&& objects[i]->getY() == this->getY() + 1)
-					this->setInObject(objects[i]);
-
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
-					&& objects[i]->getOutDirection() == TOP		//output-direction has to be right
-					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
-					this->setInObject2(objects[i]);				//set this object's second input
+				if (objects[i]->getOutDirection() == TOP)
+				{
+					if (objects[i]->getX() == this->getX()
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setInObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setInObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setInObject2(objects[i]);
+				}
 				break;
 			case LEFT:
-				if (objects[i]->getOutDirection() == RIGHT
-					&& objects[i]->getX() == this->getX() - 1
-					&& objects[i]->getY() == this->getY())
-					this->setInObject(objects[i]);
-
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also get input at its offside
-					&& objects[i]->getOutDirection() == RIGHT	//output-direction has to be right
-					&& objects[i]->getX() == this->getX() - 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
-					this->setInObject2(objects[i]);				//set this object's second input
+				if (objects[i]->getOutDirection() == RIGHT)
+				{
+					if (objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY())
+						this->setInObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setInObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setInObject2(objects[i]);
+				}
 				break;
 			default:
 				break;
@@ -543,52 +561,71 @@ void Object::updateIOObjects()
 			switch(this->getOutDirection())
 			{
 			case TOP:
-				if (objects[i]->getInDirection() == BOTTOM		//if this object has the right direction
-					&& objects[i]->getX() == this->getX()		//the same x coordinate
-					&& objects[i]->getY() == this->getY() + 1)	//and the right y coordinate
-					this->setOutObject(objects[i]);				//set the output object to this object
+				if (objects[i]->getInDirection() == BOTTOM)			//if this object has the right direction
+				{
+					if (objects[i]->getX() == this->getX()			//the same x coordinate
+						&& objects[i]->getY() == this->getY() + 1)	//and the right y coordinate
+						this->setOutObject(objects[i]);				//set the output object to this object
 
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
-					&& objects[i]->getOutDirection() == BOTTOM	//output-direction has to be right
-					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
-					this->setOutObject2(objects[i]);			//set this object's second output
+					if (objects[i]->getType() == LType::SPLITTER	//if the other object is a splitter...
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject(objects[i]);
+
+					if (this->getType() == LType::SPLITTER			//if this is a splitter it can also give output at its offside
+						&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
+						&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+						this->setOutObject2(objects[i]);			//set this object's second output
+				}
 				break;
 			case RIGHT:
-				if (objects[i]->getInDirection() == LEFT
-					&& objects[i]->getX() == this->getX() - 1
-					&& objects[i]->getY() == this->getY())
-					this->setOutObject(objects[i]);
+				if (objects[i]->getInDirection() == LEFT)
+				{
+					if (objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY())
+						this->setOutObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setOutObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject2(objects[i]);
+				}
 
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
-					&& objects[i]->getOutDirection() == LEFT	//output-direction has to be right
-					&& objects[i]->getX() == this->getX() - 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
-					this->setOutObject2(objects[i]);			//set this object's second output
 				break;
 			case BOTTOM:
-				if (objects[i]->getInDirection() == TOP
-					&& objects[i]->getX() == this->getX()
-					&& objects[i]->getY() == this->getY() - 1)
-					this->setOutObject(objects[i]);
-
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
-					&& objects[i]->getOutDirection() == TOP		//output-direction has to be right
-					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
-					this->setOutObject2(objects[i]);			//set this object's second output
+				if (objects[i]->getInDirection() == TOP)
+				{
+					if (objects[i]->getX() == this->getX()
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setOutObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setOutObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setOutObject2(objects[i]);
+				}
 				break;
 			case LEFT:
-				if (objects[i]->getInDirection() == RIGHT
-					&& objects[i]->getX() == this->getX() + 1
-					&& objects[i]->getY() == this->getY())
-					this->setOutObject(objects[i]);
-
-				if (objects[i]->getType() == LType::SPLITTER	//if this is a splitter it can also give output at its offside
-					&& objects[i]->getOutDirection() == RIGHT	//output-direction has to be right
-					&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-					&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
-					this->setOutObject2(objects[i]);			//set this object's second output
+				if (objects[i]->getInDirection() == RIGHT)
+				{
+					if (objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY())
+						this->setOutObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setOutObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject2(objects[i]);
+				}
 				break;
 			default:
 				break;
@@ -609,15 +646,20 @@ bool Object::isInputFromTop() const //gives back true, if there is coming some i
 	//checking for an Object from above
 	for (auto i = 0; i < objects.size(); i++)			
 	{
-		if (objects[i]->getX() == this->getX()			//if the x position matches
-			&& objects[i]->getY() == this->getY() - 1	//and the y position is right (the object is one above)
-			&& objects[i]->getOutDirection() == BOTTOM)	//and the out direction is to the bottom
-			return true;
-		if (this->getType() == LType::SPLITTER			//if  is a splitter, input can also come to the offside
-			&& objects[i]->getX() == this->getX() + 1	//if x coordinates are right
-			&& objects[i]->getY() == this->getY() - 1	//if y coordinates are right
-			&& objects[i]->getOutDirection() == BOTTOM)	//if outputdirection of the other object is right
-			return true;
+		if (objects[i]->getOutDirection() == BOTTOM) //output direction needs to be BOTTOM in every case
+		{
+			if (objects[i]->getX() == this->getX()			//if the x position matches
+				&& objects[i]->getY() == this->getY() - 1)	//and the y position is right (the object is one above)
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER	//if the other object is a splitter, input can come from its offside
+				&& objects[i]->getX() == this->getX() - 1	//x coordinate has to be right
+				&& objects[i]->getY() == this->getY() - 1)	//y coordinate has to be right
+				return true;
+			if (this->getType() == LType::SPLITTER			//if  is a splitter, input can also come to the offside
+				&& objects[i]->getX() == this->getX() + 1	//if x coordinates are right
+				&& objects[i]->getY() == this->getY() - 1)	//if y coordinates are right
+				return true;
+		}
 	}
 	return false; //if none of the conditions match, there is no input from above
 }
@@ -628,15 +670,20 @@ bool Object::isInputFromRight() const
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY()
-			&& objects[i]->getOutDirection() == LEFT)
-			return true;
-		if (this->getType() == LType::SPLITTER
-			&& objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getOutDirection() == LEFT)
-			return true;
+		if (objects[i]->getOutDirection() == LEFT)
+		{
+			if (objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY())
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() - 1)
+				return true;
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+		}
 	}
 	return false;
 }
@@ -645,15 +692,20 @@ bool Object::isInputFromBottom() const
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX()
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getOutDirection() == TOP)
-			return true;
-		if (this->getType() == LType::SPLITTER
-			&& objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getOutDirection() == TOP)
-			return true;
+		if (objects[i]->getOutDirection() == TOP)
+		{
+			if (objects[i]->getX() == this->getX()
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+		}
 	}
 	return false;
 }
@@ -662,15 +714,20 @@ bool Object::isInputFromLeft() const
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX() - 1
-			&& objects[i]->getY() == this->getY()
-			&& objects[i]->getOutDirection() == RIGHT)
-			return true;
-		if (this->getType() == LType::SPLITTER
-			&& objects[i]->getX() == this->getX() - 1
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getOutDirection() == RIGHT)
-			return true;
+		if (objects[i]->getOutDirection() == RIGHT)
+		{
+			if (objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY())
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() - 1)
+				return true;
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+		}
 	}
 	return false;
 }
@@ -679,15 +736,20 @@ bool Object::isOutputToTop() const //gives back true, if there is an Object abov
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX()			//if x positions match
-			&& objects[i]->getY() == this->getY() - 1	//if y positions are right
-			&& objects[i]->getInDirection() == BOTTOM)	//if the objects input is from the bottom
-			return true;								//=> there is an Object to output to above
-		if (objects[i]->getType() == LType::SPLITTER	//again, just like with inputs, a splitter can give its output to the offside
-			&& objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY() - 1
-			&& objects[i]->getInDirection() == BOTTOM)
-			return true;
+		if (objects[i]->getInDirection() == BOTTOM)	//if the objects input is from the bottom
+		{
+			if (objects[i]->getX() == this->getX()			//if x positions match
+				&& objects[i]->getY() == this->getY() - 1)	//if y positions are right
+				return true;								//=> there is an Object to output to above
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() - 1)
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER	//again, just like with inputs, a splitter can give its output to the offside
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() - 1)
+				return true;
+		}
 	}
 	return false; //if none of the conditions match, there is nothing to output to above
 }
@@ -698,15 +760,20 @@ bool Object::isOutputToRight() const
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY()
-			&& objects[i]->getInDirection() == LEFT)
-			return true;
-		if (objects[i]->getType() == LType::SPLITTER
-			&& objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getInDirection() == LEFT)
-			return true;
+		if (objects[i]->getInDirection() == LEFT)
+		{
+			if (objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY())
+				return true;
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() - 1)
+				return true;
+		}
 	}
 	return false;
 }
@@ -715,15 +782,20 @@ bool Object::isOutputToBottom() const
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX()
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getInDirection() == TOP)
-			return true;
-		if (objects[i]->getType() == LType::SPLITTER
-			&& objects[i]->getX() == this->getX() + 1
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getInDirection() == TOP)
-			return true;
+		if (objects[i]->getInDirection() == TOP)
+		{
+			if (objects[i]->getX() == this->getX()
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() + 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+		}
 	}
 	return false;
 }
@@ -732,15 +804,20 @@ bool Object::isOutputToLeft() const
 {
 	for (auto i = 0; i < objects.size(); i++)
 	{
-		if (objects[i]->getX() == this->getX() - 1
-			&& objects[i]->getY() == this->getY()
-			&& objects[i]->getInDirection() == RIGHT)
-			return true;
-		if (objects[i]->getType() == LType::SPLITTER
-			&& objects[i]->getX() == this->getX() - 1
-			&& objects[i]->getY() == this->getY() + 1
-			&& objects[i]->getInDirection() == RIGHT)
-			return true;
+		if (objects[i]->getInDirection() == RIGHT)
+		{
+			if (objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY())
+				return true;
+			if (this->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() + 1)
+				return true;
+			if (objects[i]->getType() == LType::SPLITTER
+				&& objects[i]->getX() == this->getX() - 1
+				&& objects[i]->getY() == this->getY() - 1)
+				return true;
+		}
 	}
 	return false;
 }
@@ -1580,10 +1657,9 @@ void updateBelts()
 	resetAllInputs();
 
 	for (auto i = 0; i < objects.size(); i++)		//for every object in the list set its inputobject and the inputobject's outputobject
-	{
 		objects[i]->updateDirection();
+	for (auto i = 0; i < objects.size(); i++) 
 		objects[i]->updateIOObjects();
-	}
 }
 
 void updateInIDs()
