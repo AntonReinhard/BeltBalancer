@@ -560,59 +560,26 @@ void Object::updateIOObjects()
 		{
 			switch(this->getOutDirection())
 			{
-			case TOP:
-				if (objects[i]->getInDirection() == BOTTOM)			//if this object has the right direction
+			case TOP:											//if THIS object wants to output to the top
+				if (objects[i]->getInDirection() == BOTTOM)			//if the object has the right In-direction
 				{
 					if (objects[i]->getX() == this->getX()			//the same x coordinate
-						&& objects[i]->getY() == this->getY() + 1)	//and the right y coordinate
+						&& objects[i]->getY() == this->getY() - 1)	//and the right y coordinate
 						this->setOutObject(objects[i]);				//set the output object to this object
 
 					if (objects[i]->getType() == LType::SPLITTER	//if the other object is a splitter...
 						&& objects[i]->getX() == this->getX() - 1
-						&& objects[i]->getY() == this->getY() + 1)
+						&& objects[i]->getY() == this->getY() - 1)
 						this->setOutObject(objects[i]);
 
 					if (this->getType() == LType::SPLITTER			//if this is a splitter it can also give output at its offside
 						&& objects[i]->getX() == this->getX() + 1	//x coordinates have to be right
-						&& objects[i]->getY() == this->getY() + 1)	//y coordinates have to be right
+						&& objects[i]->getY() == this->getY() - 1)	//y coordinates have to be right
 						this->setOutObject2(objects[i]);			//set this object's second output
 				}
 				break;
 			case RIGHT:
 				if (objects[i]->getInDirection() == LEFT)
-				{
-					if (objects[i]->getX() == this->getX() - 1
-						&& objects[i]->getY() == this->getY())
-						this->setOutObject(objects[i]);
-					if (objects[i]->getType() == LType::SPLITTER
-						&& objects[i]->getX() == this->getX() - 1
-						&& objects[i]->getY() == this->getY() - 1)
-						this->setOutObject(objects[i]);
-					if (this->getType() == LType::SPLITTER
-						&& objects[i]->getX() == this->getX() - 1
-						&& objects[i]->getY() == this->getY() + 1)
-						this->setOutObject2(objects[i]);
-				}
-
-				break;
-			case BOTTOM:
-				if (objects[i]->getInDirection() == TOP)
-				{
-					if (objects[i]->getX() == this->getX()
-						&& objects[i]->getY() == this->getY() - 1)
-						this->setOutObject(objects[i]);
-					if (objects[i]->getType() == LType::SPLITTER
-						&& objects[i]->getX() == this->getX() - 1
-						&& objects[i]->getY() == this->getY() - 1)
-						this->setOutObject(objects[i]);
-					if (this->getType() == LType::SPLITTER
-						&& objects[i]->getX() == this->getX() + 1
-						&& objects[i]->getY() == this->getY() - 1)
-						this->setOutObject2(objects[i]);
-				}
-				break;
-			case LEFT:
-				if (objects[i]->getInDirection() == RIGHT)
 				{
 					if (objects[i]->getX() == this->getX() + 1
 						&& objects[i]->getY() == this->getY())
@@ -623,6 +590,39 @@ void Object::updateIOObjects()
 						this->setOutObject(objects[i]);
 					if (this->getType() == LType::SPLITTER
 						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject2(objects[i]);
+				}
+
+				break;
+			case BOTTOM:
+				if (objects[i]->getInDirection() == TOP)
+				{
+					if (objects[i]->getX() == this->getX()
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() + 1
+						&& objects[i]->getY() == this->getY() + 1)
+						this->setOutObject2(objects[i]);
+				}
+				break;
+			case LEFT:
+				if (objects[i]->getInDirection() == RIGHT)
+				{
+					if (objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY())
+						this->setOutObject(objects[i]);
+					if (objects[i]->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
+						&& objects[i]->getY() == this->getY() - 1)
+						this->setOutObject(objects[i]);
+					if (this->getType() == LType::SPLITTER
+						&& objects[i]->getX() == this->getX() - 1
 						&& objects[i]->getY() == this->getY() + 1)
 						this->setOutObject2(objects[i]);
 				}
