@@ -8,4 +8,5 @@ Build 0.0.1
 Build 0.0.2
 
 -Fixed huge RAM Memory allocation (up to GB) when seeing the hover information of something too long
+
 -Fixed initial content values for a newly placed Belt
