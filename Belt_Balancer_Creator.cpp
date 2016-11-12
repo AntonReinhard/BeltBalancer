@@ -46,8 +46,8 @@ const int NUMBER_OF_SPRITE_SHEETS_BELT = 384; // = 12*32
 const int NUMBER_OF_SPRITE_SHEETS_SPLITTER_WIDTH = 16;
 const int NUMBER_OF_SPRITE_SHEETS_SPLITTER_HEIGHT = 2;
 
-const int MAX_NUMBER_OF_INPUTS = 16;
-const int MAX_NUMBER_OF_OUTPUTS = 16;
+const int MAX_NUMBER_OF_INPUTS = 32;
+const int MAX_NUMBER_OF_OUTPUTS = 32;
 
 const int NUMBER_OF_SPRITESHEETS_CURSOR_BOXES_WIDTH = 4;
 const int NUMBER_OF_SPRITESHEETS_CURSOR_BOXES_HEIGHT = 1;
@@ -147,6 +147,11 @@ public:
 		  inputObject(nullptr)
 	{
 		count++;	//"counting"
+		for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)
+		{
+			this->content[i] = 0.0;
+			this->nextTickContent[i] = 0.0;
+		}
 	}
 
 	virtual ~Object()
@@ -1619,9 +1624,12 @@ void hoverTextBox(std::string text, int x, int y) //shows text in a fitting box 
 
 			SDL_RenderCopy(gRenderer, mTexture, &textRectsrc, &textRectdest); //render the text
 		}
-		//Get rid of old surface 
+		//Get rid of old surface and Texture (important)
 		SDL_FreeSurface(textSurface);
+		SDL_DestroyTexture(mTexture);
 	}
+
+	delete textSurface;
 }
 
 void resetAllInputs()	//the function that deletes all the former contents of the belts and resets the input and output objects (called from updateBelts())
@@ -1664,15 +1672,15 @@ void updateBelts()
 
 void updateInIDs()
 {
-	auto IDcounter = 0;
+	inputCounter = 0;
 	for (auto i = 0; i < objects.size(); i++)		//for every object in the list update its input ID
 	{
 		objects[i]->setInputID(-1);					//everything is no input at first...
 		if (objects[i]->isInput())					//if an object is an input
 		{
-			objects[i]->setInputID(IDcounter);		//set its inputID
-			objects[i]->setContent(1.0, IDcounter);	//set its content to 1 on its inputID
-			IDcounter++;
+			objects[i]->setInputID(inputCounter);		//set its inputID
+			objects[i]->setContent(1.0, inputCounter);	//set its content to 1 on its inputID
+			inputCounter++;								//simultaneously keeping track globally of the total number of inputs
 		}
 	}
 }
@@ -1832,7 +1840,7 @@ int main(int argc, char* args[])
 																	temp2->getOutDirection() == LBeltIODirections::RIGHT);
 						//Look if there is something already there before placing
 						if (searchObjectAtPos(xArray, yArray) == nullptr && !isSplitterBlocking)
-						{	//nothing here, may place
+						{	// nothing here, may place
 							// mouseclick finished
 							auto* belt = new Belt();			//initializing pointer to a Belt
 							auto* splitter = new Splitter();	//initializing pointer to a Splitter
@@ -2060,14 +2068,12 @@ int main(int argc, char* args[])
 				//if (false)
 				//{
 					if (mouseNotMoved >= maxFramesMouseNotMoved)
-					{
-						//TODO: need to search for the right object inside the vector now... rewrite
-						
+					{						
 						auto* hoverObject = searchObjectAtPos(xArray, yArray);
 						if (hoverObject != nullptr) //if there is an object the mouse is hovering over
 						{
 							std::string beltcontent = "";
-							for (auto i = 0; i < MAX_NUMBER_OF_INPUTS; i++)
+							for (auto i = 0; i < inputCounter; i++)
 							{
 								if (i != 0) beltcontent += "\n";
 								std::stringstream convert; //just to convert the numbers to string
