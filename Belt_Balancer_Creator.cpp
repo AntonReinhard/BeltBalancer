@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <complex.h>
 
 using namespace std;
 
@@ -1565,6 +1566,14 @@ Object* searchObjectAtPos(int x, int y)		//searches an object at the given posit
 			if (objects[i]->getX() == x && objects[i]->getY() == y)	//if the position matches
 			{
 				return objects[i];									//return the pointer
+			} 
+			if (objects[i]->getX() == x-1 && objects[i]->getY() == y && (objects[i]->getOutDirection() == LBeltIODirections::BOTTOM || objects[i]->getOutDirection() == LBeltIODirections::TOP))	//splitters offside here
+			{
+				return objects[i];									//return the pointer
+			}
+			if (objects[i]->getX() == x && objects[i]->getY() == y-1 && (objects[i]->getOutDirection() == LBeltIODirections::LEFT || objects[i]->getOutDirection() == LBeltIODirections::RIGHT))	//splitters offside here
+			{
+				return objects[i];									//return the pointer
 			}
 		}
 	}
@@ -1824,22 +1833,10 @@ int main(int argc, char* args[])
 							break;
 						}
 					}
-					else if (e.type == SDL_MOUSEBUTTONUP)
+					else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT)	//left click -> place
 					{
-						auto* temp1 = searchObjectAtPos(xArray - 1, yArray);
-						auto* temp2 = searchObjectAtPos(xArray, yArray - 1);
-						auto* temp3 = searchObjectAtPos(xArray + 1, yArray - 1);
-						auto* temp4 = searchObjectAtPos(xArray - 1, yArray + 1);
-
-						auto isSplitterBlocking = false;		//bool if a splitter is blocking the placing
-						if (temp1 != nullptr) isSplitterBlocking = temp1->getType() == LType::SPLITTER &&
-																   (temp1->getOutDirection() == LBeltIODirections::TOP ||
-																	temp1->getOutDirection() == LBeltIODirections::BOTTOM);
-						if (temp2 != nullptr && !isSplitterBlocking) isSplitterBlocking = temp2->getType() == LType::SPLITTER &&
-																   (temp2->getOutDirection() == LBeltIODirections::LEFT ||
-																	temp2->getOutDirection() == LBeltIODirections::RIGHT);
 						//Look if there is something already there before placing
-						if (searchObjectAtPos(xArray, yArray) == nullptr && !isSplitterBlocking)
+						if (searchObjectAtPos(xArray, yArray) == nullptr)
 						{	// nothing here, may place
 							// mouseclick finished
 							auto* belt = new Belt();			//initializing pointer to a Belt
@@ -1873,9 +1870,6 @@ int main(int argc, char* args[])
 							case SPLITTER_NORTH_HOLD:
 								if (searchObjectAtPos(xArray + 1, yArray) == nullptr)
 								{
-									if (temp3 != nullptr) if (temp3->getType() == LType::SPLITTER &&
-															  (temp3->getInDirection() == LBeltIODirections::LEFT ||
-															   temp3->getInDirection() == LBeltIODirections::RIGHT)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(TOP);		//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1885,9 +1879,6 @@ int main(int argc, char* args[])
 							case SPLITTER_EAST_HOLD:
 								if (searchObjectAtPos(xArray, yArray + 1) == nullptr)
 								{
-									if (temp4 != nullptr) if (temp4->getType() == LType::SPLITTER &&
-										(temp4->getInDirection() == LBeltIODirections::TOP ||
-											temp4->getInDirection() == LBeltIODirections::BOTTOM)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(RIGHT);	//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1897,9 +1888,6 @@ int main(int argc, char* args[])
 							case SPLITTER_SOUTH_HOLD:
 								if (searchObjectAtPos(xArray + 1, yArray) == nullptr)
 								{
-									if (temp3 != nullptr) if (temp3->getType() == LType::SPLITTER &&
-										(temp3->getInDirection() == LBeltIODirections::LEFT ||
-											temp3->getInDirection() == LBeltIODirections::RIGHT)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(BOTTOM);	//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1909,9 +1897,6 @@ int main(int argc, char* args[])
 							case SPLITTER_WEST_HOLD:
 								if (searchObjectAtPos(xArray, yArray + 1) == nullptr)
 								{
-									if (temp4 != nullptr) if (temp4->getType() == LType::SPLITTER &&
-										(temp4->getInDirection() == LBeltIODirections::TOP ||
-											temp4->getInDirection() == LBeltIODirections::BOTTOM)) break;		//break, if there is a Splitter blocking this splitter
 									splitter->setOutDirection(LEFT);	//setting direction (only out is needed, in is calculated by simulate belts())
 									splitter->setX(xArray);				//setting x coordinate
 									splitter->setY(yArray);				//setting y coordinate
@@ -1923,6 +1908,20 @@ int main(int argc, char* args[])
 							default:	//shouldnt actually happen, but just in case
 								break;
 							}
+							updateBelts();		//update the belts
+							updateInIDs();		//update the inputIDs and stuff
+						}
+					} 
+					else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_RIGHT)	//right click -> delete
+					{
+						auto *temp1 = searchObjectAtPos(xArray, yArray);
+						if (temp1 != nullptr)
+						{
+							for (auto i = 0; i < objects.size(); i++)				//search for the object to be deleted
+								if (objects[i] == temp1)
+									objects.erase(objects.begin() + i);				//deletes the objects pointer from the vector
+							delete temp1;	//deletes the object behind the pointer
+							
 							updateBelts();		//update the belts
 							updateInIDs();		//update the inputIDs and stuff
 						}
@@ -2065,25 +2064,22 @@ int main(int argc, char* args[])
 				}
 
 				//show infobox
-				//if (false)
-				//{
-					if (mouseNotMoved >= maxFramesMouseNotMoved)
-					{						
-						auto* hoverObject = searchObjectAtPos(xArray, yArray);
-						if (hoverObject != nullptr) //if there is an object the mouse is hovering over
+				if (mouseNotMoved >= maxFramesMouseNotMoved)
+				{						
+					auto* hoverObject = searchObjectAtPos(xArray, yArray);
+					if (hoverObject != nullptr) //if there is an object the mouse is hovering over
+					{
+						std::string beltcontent = "";
+						for (auto i = 0; i < inputCounter; i++)
 						{
-							std::string beltcontent = "";
-							for (auto i = 0; i < inputCounter; i++)
-							{
-								if (i != 0) beltcontent += "\n";
-								std::stringstream convert; //just to convert the numbers to string
-								convert << i + 1 << ". input: " << hoverObject->getContent(i);
-								beltcontent += convert.str();
-							}
-							hoverTextBox(beltcontent, x, y);
+							if (i != 0) beltcontent += "\n";
+							std::stringstream convert; //just to convert the numbers to string
+							convert << i + 1 << ". input: " << hoverObject->getContent(i);
+							beltcontent += convert.str();
 						}
+						hoverTextBox(beltcontent, x, y);
 					}
-				//}
+				}
 
 				simulateBelts();
 
