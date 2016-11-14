@@ -19,6 +19,8 @@ Build 0.0.2:
 
 - Hovering is only showing actually relevant inputs
 
+- Can only place with left-click, right click deletes
+
 To-Do:
 Big Stuff:
 
@@ -31,6 +33,8 @@ Big Stuff:
 - resizeable Window / settings in general
 
 - side loading?
+
+- sounds (indicating when you couldn't place something or if you placed something, etc.)
 
 Small stuff:
 
