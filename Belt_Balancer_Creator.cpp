@@ -1564,16 +1564,13 @@ Object* searchObjectAtPos(int x, int y)		//searches an object at the given posit
 		for (auto i = 0; i < objects.size(); i++)
 		{
 			if (objects[i]->getX() == x && objects[i]->getY() == y)	//if the position matches
-			{
 				return objects[i];									//return the pointer
-			} 
-			if (objects[i]->getX() == x-1 && objects[i]->getY() == y && (objects[i]->getOutDirection() == LBeltIODirections::BOTTOM || objects[i]->getOutDirection() == LBeltIODirections::TOP))	//splitters offside here
+			if (objects[i]->getType() == LType::SPLITTER)
 			{
-				return objects[i];									//return the pointer
-			}
-			if (objects[i]->getX() == x && objects[i]->getY() == y-1 && (objects[i]->getOutDirection() == LBeltIODirections::LEFT || objects[i]->getOutDirection() == LBeltIODirections::RIGHT))	//splitters offside here
-			{
-				return objects[i];									//return the pointer
+				if (objects[i]->getX() == x - 1 && objects[i]->getY() == y && (objects[i]->getOutDirection() == LBeltIODirections::BOTTOM || objects[i]->getOutDirection() == LBeltIODirections::TOP))	//splitters offside here
+					return objects[i];									//return the pointer
+				if (objects[i]->getX() == x && objects[i]->getY() == y - 1 && (objects[i]->getOutDirection() == LBeltIODirections::LEFT || objects[i]->getOutDirection() == LBeltIODirections::RIGHT))	//splitters offside here
+					return objects[i];									//return the pointer
 			}
 		}
 	}
