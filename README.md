@@ -6,6 +6,8 @@ This is going to be a program to create Belt Balancers for Factorio, there are m
 
 At the moment Usage is not very intuitive... If you press '1' you get a normal Belt in your hand, if you press '2' you get a splitter, with 'r' you can rotate them and with 'q' you get a splitter or belt out of your hand again. If you hover over a Belt or Splitter the Program tells you, what ratios of a full belt come from which input. I hope to visualize what belt is what input in the future so it's easier to understand.
 You can't delete or rotate stuff that's already placed yet, but I will probably do that.
+Here are some pictures explaining a bit more:
+http://imgur.com/a/BeRpV
 
 Build 0.0.1:
 
